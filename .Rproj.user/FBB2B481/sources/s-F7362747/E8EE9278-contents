@@ -1,0 +1,98 @@
+---
+title: "Data Preparation 1"
+output: html_notebook
+---
+
+Applying the ML model to predict drinks per week.
+
+## Load Libraries
+
+```{r}
+set.seed(1234)
+
+library(caret)
+library(tidyverse)
+library(knitr) 
+library(data.table)
+library(mlr)
+library(rcompanion)
+
+source("100_functions.R")
+```
+
+## Read the Data
+
+```{r}
+path <- getwd()
+raw_data <- fread(paste0(path,
+                    "/ukb_graBLD_sample_raw_2000_e105.raw"))
+
+pheno <- fread(paste0(path,
+                      "/all_dpw_covarites_half_million"))
+```
+
+## obtain the phenotype:
+
+The phenotype is drinks per week, calculated by counting the number of drinks per week (e.g. beers, spirits, wine, etc).
+
+```{r}
+head(pheno)
+alc_col <- c("wine","champ",
+             "beer", "spirits", 
+             "whitewine", "others")
+
+pheno$pheno_dpw <- log(apply(
+  pheno[, alc_col], 1, sum) + 1)
+```
+
+Extract only the necessary predictors, such as sex, age, weight, height and age squared. And merge the snps with the demographics
+
+```{r}
+pheno2 <- pheno[,c("FID","PC1","PC2","PC3","PC4",
+                   "PC5","PC6","PC7","PC8", "pheno_dpw",
+                   "PC9","PC10","sex","age_age",
+                   "weight","height")]
+
+snp_data <- merge(raw_data, pheno2, 
+                  by.x = "FID", by.y = "FID")
+```
+
+Impute the missing values in the genetic data using the median.
+
+```{r}
+colnames(snp_data)[1:10]
+## remove some unspecific predictors
+dataset_final <- snp_data[,-c(1,2,3,4,5,6)]
+dataset_final[1:5,1:10]
+
+imp = mlr::impute(dataset_final, 
+                  classes = 
+                    list(numeric = imputeMedian(), 
+                         integer = imputeMedian(), 
+                         factor = imputeMode()))
+
+
+dataset_final <- imp$data
+dataset_final$Phenotype_dpw <- dataset_final$pheno_dpw
+dataset_final$pheno_dpw <- NULL
+dim(dataset_final)
+```
+
+Perform some feature manipulation such as normalization and remve highly correlated features.
+
+```{r}
+dataset_final <- trainfun(dataset_final, 
+                          target = "pheno_dpw")
+
+write.csv(dataset_final,
+          "data_set_pheno.csv",
+          row.names = FALSE)
+```
+
+Check normality
+
+```{r}
+
+plotNormalHistogram(dataset_final$Phenotype)
+qqnorm(dataset_final$Phenotype, ylab="Sample Quantiles for DPW residuals")
+qqline(dataset_final$Phenotype, col="red")

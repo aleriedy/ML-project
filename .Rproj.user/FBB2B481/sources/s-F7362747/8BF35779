@@ -1,0 +1,24 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1546280257189.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3076856787",
+    "id" : "8BF35779",
+    "lastKnownWriteTime" : 1546377746,
+    "last_content_update" : 1546377746952,
+    "path" : "~/Desktop/Econ_project/UKBIO/ML-Project/ML-Project/201_data_prep_2.Rmd",
+    "project_path" : "201_data_prep_2.Rmd",
+    "properties" : {
+        "chunk_output_type" : "inline",
+        "cursorPosition" : "30,19",
+        "scrollLine" : "6",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

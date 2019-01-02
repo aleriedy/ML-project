@@ -1,0 +1,51 @@
+---
+title: "Extract Data"
+output: html_notebook
+---
+
+Using ML to predict the dpw using UK bio-bank 
+
+## Load the libraries
+
+```{r}
+library(data.table)
+library(tidyverse)
+library(caret)
+library(caretEnsemble)
+```
+## Extract random 2000 participants from UK BioBank 
+
+```{r}
+famdata <- fread("")
+dim(famdata)
+data_sam <- sample(1:nrow(famdata), 2000)
+famdata2 <- famdata[data_sam,]
+write.table(famdata[,c(1,2)], "", row.names = F, quote = F)
+```
+
+Extract SNPs with certain P-value threshold (10e4, 10e5, 10e6)
+
+```{r}
+snp_path <-"" 
+snp_df <- snp_fun(snp_path, P-Value = 0.00001)
+write.table(snp_df, "", row.names = F, quote = F)
+```
+
+Use plink to extract the genetic data of these particiants and convert it to raw data
+
+```{bash}
+sudo ~/plink/plink/plink --bfile ~/UKB/download/ukb_non_imputed_best_guess_noQC --keep ~/UKB_2/graLD_sample_500.txt --make-bed --out ~/UKB/download/GraBLD/ukb_graBLD_sample
+```
+
+Use plink to extract the genetic material in the identified p-value threshold from the 2000 participants
+
+```{bash}
+sudo ~/plink/plink/plink --bfile ukb_graBLD_sample --extract snp_list.txt --make-bed --out ukb_graBLD_sample_e103
+```
+
+Convert the binary to raw files (text files), so it could be read in R or Python
+
+```{bash}
+sudo ~/plink/plink/plink --bfile /home/ubuntu/UKB/download/GraBLD/ukb_graBLD_sample_2000_e106  --recodeA --out ~/UKB/download/GraBLD/ukb_graBLD_sample_raw_2000_e106
+```
+

@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1546285696394.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1586694415",
+    "id" : "4B11BAB1",
+    "lastKnownWriteTime" : 1546370441,
+    "last_content_update" : 1546370441867,
+    "path" : "~/Desktop/Econ_project/UKBIO/ML-Project/ML-Project/200_optimization.R",
+    "project_path" : "200_optimization.R",
+    "properties" : {
+        "cursorPosition" : "54,68",
+        "scrollLine" : "28",
+        "tempName" : "Untitled2"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,70 @@
+---
+title: "Data Preparation 2"
+output: html_notebook
+---
+
+## load libraries
+
+```{r}
+set.seed(1234)
+
+library(caret)
+library(tidyverse)
+library(knitr) 
+library(data.table)
+library(mlr)
+```
+
+## load the data
+
+```{r}
+path <- getwd()
+dataset_final <- read.csv(paste(path, "data_set_pheno.csv", sep = "/"))
+```
+
+We analyse the residuals of a fitted linear model instead of the actual dpw. This will take the  principal components, sex, age and age squared into consideration and eliminate them from the final model. However, this can cause difficulties in intreptating the predicted values later on  
+
+Split the dataset into training and testing (500 participants for testing)
+
+```{r}
+dim(dataset_final)
+s1 <- sample(1:nrow(dataset_final), 500)
+dataset_final
+mod1 <- lm(
+  dataset_final$pheno_dpw[s1] ~ dataset_final$PC1[s1] + 
+    dataset_final$PC2[s1] + dataset_final$PC3[s1] + 
+    dataset_final$PC4[s1] + dataset_final$PC5[s1] + 
+    dataset_final$PC6[s1] + dataset_final$PC7[s1] + 
+    dataset_final$PC8[s1] + dataset_final$PC9[s1] + 
+    dataset_final$PC10[s1] + dataset_final$sex[s1] + 
+    dataset_final$age[s1] + dataset_final$age_age[s1] + 
+    dataset_final$weight[s1] + dataset_final$height[s1])
+
+resd_res1 <- residuals(mod1)
+
+mod2 <- lm(
+  dataset_final$pheno_dpw[-tt] ~ dataset_final$PC1[-tt] + 
+    dataset_final$PC2[-tt] + dataset_final$PC3[-tt] + 
+    dataset_final$PC4[-tt] + dataset_final$PC5[-tt] + 
+    dataset_final$PC6[-tt] + dataset_final$PC7[-tt] + 
+    dataset_final$PC8[-tt] + dataset_final$PC9[-tt] + 
+    dataset_final$PC10[-tt] + dataset_final$sex[-tt] + 
+    dataset_final$age[-tt] + dataset_final$age_age[-tt] +
+    dataset_final$weight[-tt] + dataset_final$height[-tt])
+
+resd_res2 <- residuals(mod2)
+
+dataset_final$pheno_dpw[tt] <- resd_res1
+dataset_final$pheno_dpw[-tt] <- resd_res2
+```
+
+## Save the dataset
+
+```{r}
+write.csv(dataset_final,
+          "data_set_pheno_resd.csv",
+          row.names = FALSE)
+```
+
+
+

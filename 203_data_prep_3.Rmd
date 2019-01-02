@@ -1,0 +1,114 @@
+---
+title: "Data Preparation 3"
+output: html_notebook
+---
+
+## load libraries
+
+```{r}
+library(keras)
+library(data.table)
+
+set.seed(12)
+```
+
+## read the data
+
+```{r}
+path <- getwd()
+dataset_final <- read.csv(paste(path, "data_set_pheno_resd.csv", sep = "/"))
+```
+
+In order to represent the interaction between the SNPs we applied deep auto-encoder network to capture possible snp interactions through extracting its hidden layers
+
+```{r}
+# read the results of a large p-value threshold snps
+dataset_auto <- fread("")
+
+dim(dataset_auto)
+df_2 <- dataset1[,-c(1,2,3,4,5)]
+# represent the snps as binary (major homo, and hetero are 1 and homo minor is 0)
+df_2[] <- sapply(df_2, function (x) ifelse(x >= 1, 1, 0))
+x_train <- as.matrix(df_2)
+x_train[1:5,1:5]
+y_train <- as.matrix(trainy)
+
+
+model <- keras_model_sequential()
+
+model %>% 
+  layer_dense(units = 1000, activation = 'relu', input_shape = ncol(x_train)) %>% 
+  layer_dropout(rate = 0.6) %>% 
+  layer_dense(units = 600, activation = 'relu', name= "middle1") %>% 
+  layer_dropout(rate = 0.5) %>% 
+  layer_dense(units = 300, activation = 'relu', name= "middle2") %>% 
+  layer_dropout(rate = 0.5) %>% 
+  layer_dense(units = 150, activation = 'relu', name= "middle3") %>% 
+  layer_dropout(rate = 0.2) %>% 
+  layer_dense(units = 300, activation = 'relu') %>% 
+  layer_dense(units = 600, activation = 'relu') %>% 
+  layer_dense(units = 1000, activation = 'relu') %>% 
+  layer_dense(units = ncol(x_train), activation = 'sigmoid') 
+
+
+sgd <- optimizer_adam(lr = 0.01)
+
+model %>%
+  compile(
+    loss = 'binary_crossentropy',
+    optimizer = sgd,
+    metrics = c('accuracy')
+  )
+
+model
+
+checkpoint <- callback_model_checkpoint(
+  filepath = "model.hdf5", 
+  save_best_only = TRUE, 
+  period = 1,
+  verbose = 1
+)
+
+early_stopping <- callback_early_stopping(patience = 5)
+
+hist <- model %>% fit(x = x_train, y = x_train, 
+                      epochs = 100, batch_size = 32, 
+                      validation_split = 0.2, 
+                      callbacks = list(checkpoint, early_stopping))
+
+
+evaluate(model, x_train, x_train)
+
+layer_name <- 'middle1'
+intermediate_layer_model <- keras_model(inputs = model$input,
+                                        outputs = get_layer(model, layer_name)$output)
+intermediate_output31 <- predict(intermediate_layer_model, x_train)
+colnames(intermediate_output31) <- paste0("Auto_",1:600)
+intermediate_output31 <- intermediate_output31[,colSums(intermediate_output31!=0)>0]
+
+layer_name <- 'middle3'
+intermediate_layer_model <- keras_model(inputs = model$input,
+                                        outputs = get_layer(model, layer_name)$output)
+intermediate_output3 <- predict(intermediate_layer_model, x_train)
+colnames(intermediate_output3) <- paste0("Auto_",1:150)
+intermediate_output3 <- intermediate_output3[,colSums(intermediate_output3!=0)>0]
+```
+
+Add the extracted layers to the main dataset
+
+```{r}
+raw_data <- fread(paste0(path,
+                    "/ukb_graBLD_sample_raw_2000_e105.raw"))
+
+raw_data$pheno <- dataset_final$pheno_dpw
+dataset_final2 <- cbind(raw_data, intermediate_output3)
+```
+
+## Save the data
+
+```{r}
+write.csv(dataset_final2,
+          "data_set_pheno_resd_auto.csv",
+          row.names = FALSE)
+```
+
